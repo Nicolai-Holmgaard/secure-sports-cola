@@ -1,4 +1,6 @@
-use crate::api::client::{get_active_products, get_member_balance, get_member_id, post_sale};
+use crate::api::client::{
+    get_active_products, get_member_balance, get_member_id, get_named_products, post_sale,
+};
 use crate::api::types::SaleRequest;
 use clap::Parser;
 mod api;
@@ -30,11 +32,17 @@ async fn main() -> Result<(), confy::ConfyError> {
     }
     if cli.list {
         let products = get_active_products(&cfg.url, cfg.room).await.unwrap();
+        let named_products = get_named_products(&cfg.url).await.unwrap();
+        println!("{:#?}", named_products);
         println!("Active products:");
         for (id, product) in products {
+            let shorts = named_products
+                .iter()
+                .filter(|named_product| named_product.1.to_string() == id);
             println!(
-                "{:4} {:7}: {}",
+                "{:4} {} {:7} {}",
                 id,
+                shorts.count(),
                 format!("({})", product.price),
                 product.name
             );
@@ -42,15 +50,14 @@ async fn main() -> Result<(), confy::ConfyError> {
         return Ok(());
     }
 
-    post_sale(
-        &cfg.url,
-        SaleRequest {
-            member_id,
-            room: cfg.room,
-            buystring: format!("{} {}", &username, cli.buystring.join(" ")),
-        },
-    )
-    .await
-    .unwrap();
+    let SaleReq = SaleRequest {
+        member_id,
+        room: cfg.room,
+        buystring: format!("{} {}", &username, cli.buystring.join(" ")),
+    };
+
+    println!("{:?}", SaleReq);
+
+    post_sale(&cfg.url, SaleReq).await.unwrap();
     Ok(())
 }

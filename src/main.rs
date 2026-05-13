@@ -36,13 +36,22 @@ async fn main() -> Result<(), confy::ConfyError> {
         println!("{:#?}", named_products);
         println!("Active products:");
         for (id, product) in products {
-            let shorts = named_products
-                .iter()
-                .filter(|named_product| named_product.1.to_string() == id);
+            let short_id: i32 = id.parse().unwrap();
+            let shorts: Vec<String> = named_products
+                .clone()
+                .into_iter()
+                .filter_map(|short| {
+                    if short.1 == short_id {
+                        Some(short.0)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
             println!(
-                "{:4} {} {:7} {}",
+                "{:4} {:?} {:7} {}",
                 id,
-                shorts.count(),
+                shorts,
                 format!("({})", product.price),
                 product.name
             );
